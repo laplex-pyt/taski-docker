@@ -1,0 +1,39 @@
+# docker-compose.production.yml
+
+volumes:
+  pg_data_production:
+  static_volume:
+
+services:
+  db:
+    image: postgres:13.10
+    env_file: .env
+    volumes:
+      - pg_data_production:/var/lib/postgresql/data
+  
+  backend:
+    image: avlapyandexru/taski_backend
+    env_file: .env
+    depends_on:
+      - db
+    volumes:
+      - static_volume:/backend_static
+  
+  frontend:
+    image: avlapyandexru/taski_frontend
+    env_file: .env
+    volumes:
+      - static_volume:/frontend_static
+    command: cp -r /app/build/. /frontend_static/
+
+  gateway:
+    image: avlapyandexru/taski_gateway 
+    env_file: .env
+    depends_on:
+      - backend
+    volumes:
+      - static_volume:/staticfiles
+    # перенаправление всех запросов с порта 8000 хоста
+    # на порт 80 контейнера
+    ports:
+      - 8000:80
